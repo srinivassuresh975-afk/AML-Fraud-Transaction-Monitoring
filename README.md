@@ -1,8 +1,8 @@
 # 🛡️ AML Fraud Analytics & Transaction Monitoring
 
-> An end-to-end Data Analytics case study transforming large-scale financial transaction data into actionable AML and fraud intelligence using **Python, feature engineering, exploratory data analysis, SQL concepts, and Power BI**.
+> An end-to-end Data Analytics case study transforming large-scale financial transaction data into actionable AML and fraud intelligence using **Python, Pandas, feature engineering, exploratory data analysis, SQL concepts, and Power BI**.
 
-This project simulates a real-world transaction-monitoring workflow: processing raw transaction data, engineering fraud-risk indicators, validating suspicious behavior, and presenting management-level insights through an interactive Power BI dashboard.
+This project simulates a real-world transaction-monitoring workflow: processing raw transaction data, engineering fraud-risk indicators, validating suspicious behavior, prioritizing transactions for investigation, and presenting management-level insights through an interactive Power BI dashboard.
 
 ---
 
@@ -22,7 +22,7 @@ This project simulates a real-world transaction-monitoring workflow: processing 
 
 The objective of this project was to build an analytics-driven transaction-monitoring framework capable of identifying fraudulent activity, suspicious transaction behavior, high-risk transactions, and investigation priorities from a large financial transaction dataset.
 
-The final analytical dataset contains approximately **2.77 million transactions** focused on **CASH_OUT** and **TRANSFER** activity.
+The final analytical dataset contains approximately **2.77 million transactions**, focused on **CASH_OUT** and **TRANSFER** activity.
 
 Key portfolio findings include:
 
@@ -78,41 +78,41 @@ The analysis focuses on:
 
 ```text
 Raw Transaction Data
-        │
+        |
         ▼
 ┌─────────────────────┐
 │   Data Extraction   │
-│      extract.py     │
-└──────────┬──────────┘
-           │
-           ▼
+│     extract.py      │
+└─────────────────────┘
+        |
+        ▼
 ┌─────────────────────┐
 │ Data Transformation │
 │    transform.py     │
-└──────────┬──────────┘
-           │
-           ▼
+└─────────────────────┘
+        |
+        ▼
 ┌─────────────────────────┐
 │   Feature Engineering   │
 │ feature_engineering.py  │
-└──────────┬──────────────┘
-           │
-           ▼
+└─────────────────────────┘
+        |
+        ▼
 ┌─────────────────────┐
 │   Data Validation   │
-│   validation.py     │
-└──────────┬──────────┘
-           │
-           ▼
+│    validation.py    │
+└─────────────────────┘
+        |
+        ▼
 ┌─────────────────────┐
 │ Exploratory Analysis│
 │       eda.py        │
-└──────────┬──────────┘
-           │
-           ▼
+└─────────────────────┘
+        |
+        ▼
 ┌─────────────────────┐
 │   Power BI Model    │
-└──────────┬──────────┘
-           │
-           ▼
+└─────────────────────┘
+        |
+        ▼
 Executive Dashboard + Investigation Queue
