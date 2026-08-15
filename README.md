@@ -1,8 +1,8 @@
 # 🛡️ AML Fraud Analytics & Transaction Monitoring
 
-> An end-to-end Data Analytics case study transforming large-scale financial transaction data into actionable AML and fraud intelligence using **Python, SQL concepts, feature engineering, exploratory data analysis, and Power BI**.
+> An end-to-end Data Analytics case study transforming large-scale financial transaction data into actionable AML and fraud intelligence using **Python, feature engineering, exploratory data analysis, SQL concepts, and Power BI**.
 
-The project simulates a real-world transaction-monitoring workflow: processing raw transaction data, engineering fraud-risk indicators, validating suspicious behavior, and presenting management-level insights through an interactive Power BI dashboard.
+This project simulates a real-world transaction-monitoring workflow: processing raw transaction data, engineering fraud-risk indicators, validating suspicious behavior, and presenting management-level insights through an interactive Power BI dashboard.
 
 ---
 
@@ -20,7 +20,7 @@ The project simulates a real-world transaction-monitoring workflow: processing r
 
 ## 🎯 Executive Summary
 
-The objective of this project was to build an analytics-driven transaction monitoring framework capable of identifying fraudulent activity, suspicious transaction behavior, high-risk transactions, and investigation priorities from a large financial transaction dataset.
+The objective of this project was to build an analytics-driven transaction-monitoring framework capable of identifying fraudulent activity, suspicious transaction behavior, high-risk transactions, and investigation priorities from a large financial transaction dataset.
 
 The final analytical dataset contains approximately **2.77 million transactions** focused on **CASH_OUT** and **TRANSFER** activity.
 
@@ -32,9 +32,9 @@ Key portfolio findings include:
 - Approximately **12.06bn** in confirmed fraud exposure
 - Approximately **1.20M** large-value transactions
 - Approximately **8.02K** structuring alerts
-- Fraud activity concentrated within **CASH_OUT** and **TRANSFER** transactions
+- Confirmed fraud concentrated within **CASH_OUT** and **TRANSFER**
 
-The project demonstrates how data analytics can support fraud investigation teams by converting transaction-level data into prioritized risk intelligence.
+The project demonstrates how data analytics can support fraud-investigation teams by converting transaction-level data into prioritized risk intelligence.
 
 ---
 
@@ -76,8 +76,6 @@ The analysis focuses on:
 
 ## 🏗️ Analytics Architecture
 
-The project follows a structured analytics pipeline:
-
 ```text
 Raw Transaction Data
         │
@@ -101,7 +99,7 @@ Raw Transaction Data
            │
            ▼
 ┌─────────────────────┐
-│ Data Validation     │
+│   Data Validation   │
 │   validation.py     │
 └──────────┬──────────┘
            │
