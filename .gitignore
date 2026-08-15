@@ -1,0 +1,128 @@
+# ==========================================
+# AML Fraud Analytics - Git Ignore
+# ==========================================
+
+# ------------------------------------------
+# Large / generated datasets
+# ------------------------------------------
+
+data/raw/*
+data/cleaned/*
+data/enriched/*
+data/reports/*
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/cleaned/.gitkeep
+!data/enriched/.gitkeep
+!data/reports/.gitkeep
+
+
+# ------------------------------------------
+# Power BI files
+# ------------------------------------------
+
+# PBIX file is larger than GitHub's
+# standard 100 MB file-size limit.
+# Keep the dashboard locally and publish
+# screenshots + presentation on GitHub.
+
+dashboard/*.pbix
+*.pbix
+
+
+# ------------------------------------------
+# Python cache
+# ------------------------------------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# ------------------------------------------
+# Virtual environments
+# ------------------------------------------
+
+venv/
+.venv/
+env/
+ENV/
+
+
+# ------------------------------------------
+# Jupyter Notebook temporary files
+# ------------------------------------------
+
+.ipynb_checkpoints/
+
+
+# ------------------------------------------
+# Logs
+# ------------------------------------------
+
+*.log
+logs/
+
+
+# ------------------------------------------
+# IDE / Editor files
+# ------------------------------------------
+
+.vscode/
+.idea/
+
+
+# ------------------------------------------
+# Operating system files
+# ------------------------------------------
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ------------------------------------------
+# Temporary files
+# ------------------------------------------
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+
+# ------------------------------------------
+# Python build / packaging files
+# ------------------------------------------
+
+build/
+dist/
+*.egg-info/
+.eggs/
+
+
+# ------------------------------------------
+# Testing / coverage files
+# ------------------------------------------
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+
+# ------------------------------------------
+# Environment / secret files
+# ------------------------------------------
+
+.env
+.env.*
+*.env
+
+
+# ------------------------------------------
+# Miscellaneous
+# ------------------------------------------
+
+*.cache
