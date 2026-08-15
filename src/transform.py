@@ -2,11 +2,13 @@
 transform.py
 ------------
 
-Step 3 of the ETL Pipeline
+Step 3 of the ETL pipeline.
 
-Purpose:
 Clean the raw AML transaction dataset and create the cleaned dataset
 used for downstream feature engineering.
+
+Note:
+Duplicate removal is performed within each processing chunk.
 """
 
 import pandas as pd
@@ -25,13 +27,15 @@ def clean_dataset():
 
     Steps:
     - Read the raw dataset in chunks
-    - Remove duplicate rows
+    - Remove duplicate rows within each chunk
     - Remove rows containing missing values
     - Keep fraud-relevant transaction types
+    - Ensure transaction amount is numeric
+    - Remove invalid or negative transaction amounts
     - Append cleaned chunks into one CSV
     """
 
-    print("\nCleaning Dataset...\n")
+    print("\nCleaning dataset...\n")
 
     first_chunk = True
     total_rows_written = 0
@@ -46,7 +50,7 @@ def clean_dataset():
 
         print(f"Processing chunk {chunk_number}...")
 
-        # Remove duplicate rows
+        # Remove duplicate rows within the current chunk
         chunk = chunk.drop_duplicates()
 
         # Remove rows containing missing values
@@ -72,7 +76,7 @@ def clean_dataset():
             chunk["amount"] >= 0
         ]
 
-        # Save cleaned data
+        # Save cleaned chunk
         chunk.to_csv(
             CLEANED_CSV_FILE,
             mode="w" if first_chunk else "a",
@@ -87,7 +91,7 @@ def clean_dataset():
     print("DATA CLEANING COMPLETED")
     print("=" * 60)
     print(f"Rows written : {total_rows_written:,}")
-    print(f"Saved to    : {CLEANED_CSV_FILE}")
+    print(f"Saved to     : {CLEANED_CSV_FILE}")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
 """
 eda.py
-------------------------------------------------------------
-Step 5 of the AML Fraud Analytics ETL Pipeline
+------
 
-Purpose:
-Perform Exploratory Data Analysis on the enriched AML dataset
-and create summary CSV files for Power BI and reporting.
-------------------------------------------------------------
+Step 5 of the AML Fraud Analytics ETL pipeline.
+
+Perform exploratory analysis on the enriched transaction dataset
+and create summary CSV files for reporting and Power BI.
 """
 
 import pandas as pd
@@ -18,6 +17,34 @@ from src.config import (
 )
 
 
+REQUIRED_COLUMNS = {
+    "amount",
+    "isFraud",
+    "type",
+    "risk_level",
+    "is_large_transaction",
+    "is_very_large_transaction",
+    "structuring_proxy_flag",
+    "origin_account_emptied",
+    "destination_was_empty",
+    "origin_balance_mismatch",
+    "destination_balance_mismatch",
+    "high_risk_transaction_type",
+}
+
+
+RED_FLAG_COLUMNS = [
+    "is_large_transaction",
+    "is_very_large_transaction",
+    "structuring_proxy_flag",
+    "origin_account_emptied",
+    "destination_was_empty",
+    "origin_balance_mismatch",
+    "destination_balance_mismatch",
+    "high_risk_transaction_type",
+]
+
+
 def run_eda():
     """
     Analyze the enriched AML transaction dataset and generate
@@ -27,10 +54,6 @@ def run_eda():
     print("\n" + "=" * 60)
     print("AML FRAUD ANALYTICS - EDA & REPORTING")
     print("=" * 60)
-
-    # ---------------------------------------------------------
-    # VALIDATE INPUT FILE
-    # ---------------------------------------------------------
 
     if not ENRICHED_CSV_FILE.exists():
         raise FileNotFoundError(
@@ -45,51 +68,20 @@ def run_eda():
     print(f"\nInput file : {ENRICHED_CSV_FILE}")
     print(f"Chunk size : {CHUNK_SIZE:,}")
 
-
-    # ---------------------------------------------------------
-    # GLOBAL METRICS
-    # ---------------------------------------------------------
-
     total_transactions = 0
     total_amount = 0.0
-
     total_fraud_transactions = 0
     total_fraud_amount = 0.0
 
-
-    # ---------------------------------------------------------
-    # SUMMARY CONTAINERS
-    # ---------------------------------------------------------
-
     transaction_type_summary = {}
-
     risk_level_summary = {}
-
-
-    # ---------------------------------------------------------
-    # RED FLAG COLUMNS
-    # ---------------------------------------------------------
-
-    red_flag_columns = [
-        "is_large_transaction",
-        "is_very_large_transaction",
-        "structuring_flag",
-        "origin_account_emptied",
-        "destination_was_empty",
-        "origin_balance_mismatch",
-        "destination_balance_mismatch",
-        "high_risk_transaction_type",
-    ]
 
     red_flag_summary = {
         column: 0
-        for column in red_flag_columns
+        for column in RED_FLAG_COLUMNS
     }
 
-
-    # ---------------------------------------------------------
-    # PROCESS ENRICHED DATASET IN CHUNKS
-    # ---------------------------------------------------------
+    schema_checked = False
 
     for chunk_number, chunk in enumerate(
         pd.read_csv(
@@ -99,143 +91,96 @@ def run_eda():
         start=1,
     ):
 
-        print(
-            f"Processing EDA chunk "
-            f"{chunk_number}..."
-        )
+        print(f"Processing EDA chunk {chunk_number}...")
 
+        if not schema_checked:
+            missing_columns = (
+                REQUIRED_COLUMNS
+                - set(chunk.columns)
+            )
 
-        # =====================================================
-        # TOTAL TRANSACTIONS
-        # =====================================================
+            if missing_columns:
+                raise ValueError(
+                    "Missing required EDA columns: "
+                    f"{sorted(missing_columns)}"
+                )
+
+            schema_checked = True
 
         total_transactions += len(chunk)
 
-
-        # =====================================================
-        # TOTAL AMOUNT
-        # =====================================================
-
-        if "amount" in chunk.columns:
-
-            total_amount += float(
-                chunk["amount"].sum()
-            )
-
-
-        # =====================================================
-        # FRAUD METRICS
-        # =====================================================
-
-        if "isFraud" in chunk.columns:
-
-            fraud_mask = (
-                chunk["isFraud"] == 1
-            )
-
-            total_fraud_transactions += int(
-                fraud_mask.sum()
-            )
-
-            if "amount" in chunk.columns:
-
-                total_fraud_amount += float(
-                    chunk.loc[
-                        fraud_mask,
-                        "amount",
-                    ].sum()
-                )
-
-
-        # =====================================================
-        # TRANSACTION TYPE SUMMARY
-        # =====================================================
-
-        if "type" in chunk.columns:
-
-            type_counts = (
-                chunk["type"]
-                .value_counts()
-            )
-
-            for transaction_type, count in type_counts.items():
-
-                transaction_type_summary[
-                    transaction_type
-                ] = (
-                    transaction_type_summary.get(
-                        transaction_type,
-                        0,
-                    )
-                    + int(count)
-                )
-
-
-        # =====================================================
-        # RISK LEVEL SUMMARY
-        # =====================================================
-
-        if "risk_level" in chunk.columns:
-
-            risk_counts = (
-                chunk["risk_level"]
-                .value_counts()
-            )
-
-            for risk_level, count in risk_counts.items():
-
-                risk_level_summary[
-                    risk_level
-                ] = (
-                    risk_level_summary.get(
-                        risk_level,
-                        0,
-                    )
-                    + int(count)
-                )
-
-
-        # =====================================================
-        # RED FLAG SUMMARY
-        # =====================================================
-
-        for column in red_flag_columns:
-
-            if column in chunk.columns:
-
-                red_flag_summary[
-                    column
-                ] += int(
-                    chunk[column].sum()
-                )
-
-
-    # ---------------------------------------------------------
-    # CALCULATED METRICS
-    # ---------------------------------------------------------
-
-    if total_transactions > 0:
-
-        fraud_percentage = (
-            total_fraud_transactions
-            / total_transactions
-        ) * 100
-
-        average_transaction_amount = (
-            total_amount
-            / total_transactions
+        total_amount += float(
+            chunk["amount"].sum()
         )
 
-    else:
+        fraud_mask = (
+            chunk["isFraud"] == 1
+        )
 
-        fraud_percentage = 0.0
+        total_fraud_transactions += int(
+            fraud_mask.sum()
+        )
 
-        average_transaction_amount = 0.0
+        total_fraud_amount += float(
+            chunk.loc[
+                fraud_mask,
+                "amount",
+            ].sum()
+        )
 
+        type_counts = (
+            chunk["type"]
+            .value_counts()
+        )
 
-    # =========================================================
-    # AML SUMMARY
-    # =========================================================
+        for transaction_type, count in type_counts.items():
+            transaction_type_summary[
+                transaction_type
+            ] = (
+                transaction_type_summary.get(
+                    transaction_type,
+                    0,
+                )
+                + int(count)
+            )
+
+        risk_counts = (
+            chunk["risk_level"]
+            .value_counts()
+        )
+
+        for risk_level, count in risk_counts.items():
+            risk_level_summary[
+                risk_level
+            ] = (
+                risk_level_summary.get(
+                    risk_level,
+                    0,
+                )
+                + int(count)
+            )
+
+        for column in RED_FLAG_COLUMNS:
+            red_flag_summary[
+                column
+            ] += int(
+                chunk[column].sum()
+            )
+
+    if total_transactions == 0:
+        raise ValueError(
+            "Enriched dataset is empty."
+        )
+
+    fraud_percentage = (
+        total_fraud_transactions
+        / total_transactions
+    ) * 100
+
+    average_transaction_amount = (
+        total_amount
+        / total_transactions
+    )
 
     aml_summary_df = pd.DataFrame(
         {
@@ -247,7 +192,6 @@ def run_eda():
                 "Fraud Percentage",
                 "Fraud Amount",
             ],
-
             "Value": [
                 total_transactions,
                 total_amount,
@@ -258,11 +202,6 @@ def run_eda():
             ],
         }
     )
-
-
-    # =========================================================
-    # TRANSACTION TYPE SUMMARY
-    # =========================================================
 
     transaction_type_df = pd.DataFrame(
         list(
@@ -275,7 +214,6 @@ def run_eda():
     )
 
     if not transaction_type_df.empty:
-
         transaction_type_df = (
             transaction_type_df
             .sort_values(
@@ -283,11 +221,6 @@ def run_eda():
                 ascending=False,
             )
         )
-
-
-    # =========================================================
-    # RISK LEVEL SUMMARY
-    # =========================================================
 
     risk_level_df = pd.DataFrame(
         list(
@@ -300,7 +233,6 @@ def run_eda():
     )
 
     if not risk_level_df.empty:
-
         risk_level_df = (
             risk_level_df
             .sort_values(
@@ -308,11 +240,6 @@ def run_eda():
                 ascending=False,
             )
         )
-
-
-    # =========================================================
-    # RED FLAG SUMMARY
-    # =========================================================
 
     red_flag_df = pd.DataFrame(
         list(
@@ -325,7 +252,6 @@ def run_eda():
     )
 
     if not red_flag_df.empty:
-
         red_flag_df = (
             red_flag_df
             .sort_values(
@@ -333,11 +259,6 @@ def run_eda():
                 ascending=False,
             )
         )
-
-
-    # =========================================================
-    # SAVE REPORTS
-    # =========================================================
 
     aml_summary_file = (
         REPORTS_FOLDER
@@ -359,7 +280,6 @@ def run_eda():
         / "red_flag_summary.csv"
     )
 
-
     aml_summary_df.to_csv(
         aml_summary_file,
         index=False,
@@ -379,11 +299,6 @@ def run_eda():
         red_flag_file,
         index=False,
     )
-
-
-    # =========================================================
-    # DISPLAY SUMMARY
-    # =========================================================
 
     print("\n" + "=" * 60)
     print("EDA SUMMARY")
@@ -419,67 +334,26 @@ def run_eda():
         f"{total_fraud_amount:,.2f}"
     )
 
-
-    # =========================================================
-    # DISPLAY TRANSACTION TYPE SUMMARY
-    # =========================================================
-
     print("\nTransaction Type Summary:")
-
-    if transaction_type_df.empty:
-
-        print("No transaction type data.")
-
-    else:
-
-        print(
-            transaction_type_df.to_string(
-                index=False
-            )
+    print(
+        transaction_type_df.to_string(
+            index=False
         )
-
-
-    # =========================================================
-    # DISPLAY RISK LEVEL SUMMARY
-    # =========================================================
+    )
 
     print("\nRisk Level Summary:")
-
-    if risk_level_df.empty:
-
-        print("No risk level data.")
-
-    else:
-
-        print(
-            risk_level_df.to_string(
-                index=False
-            )
+    print(
+        risk_level_df.to_string(
+            index=False
         )
-
-
-    # =========================================================
-    # DISPLAY RED FLAG SUMMARY
-    # =========================================================
+    )
 
     print("\nRed Flag Summary:")
-
-    if red_flag_df.empty:
-
-        print("No red flag data.")
-
-    else:
-
-        print(
-            red_flag_df.to_string(
-                index=False
-            )
+    print(
+        red_flag_df.to_string(
+            index=False
         )
-
-
-    # =========================================================
-    # COMPLETION
-    # =========================================================
+    )
 
     print("\n" + "=" * 60)
     print("EDA & REPORTING COMPLETED")

@@ -2,9 +2,8 @@
 feature_engineering.py
 ----------------------
 
-Step 4 of the AML Fraud Analytics ETL Pipeline.
+Step 4 of the AML Fraud Analytics ETL pipeline.
 
-Purpose:
 Create AML/fraud-related analytical features from the cleaned
 transaction dataset and save the enriched dataset for EDA
 and Power BI reporting.
@@ -23,56 +22,42 @@ from src.config import (
 )
 
 
-# ============================================================
-# FEATURE ENGINEERING
-# ============================================================
-
 def add_features(chunk):
     """
-    Add AML and fraud-related features to a dataframe chunk.
+    Add AML and fraud-related analytical features to a dataframe chunk.
+
+    The risk score used in this project is a heuristic analytical score
+    for prioritization. It is not a validated production AML model.
     """
 
-    # --------------------------------------------------------
-    # 1. FRAUD STATUS
-    # --------------------------------------------------------
+    # 1. Fraud status
+    chunk["fraud_status"] = (
+        chunk["isFraud"]
+        .map(
+            {
+                0: "Legitimate",
+                1: "Fraud",
+            }
+        )
+        .fillna("Unknown")
+    )
 
-    chunk["fraud_status"] = chunk["isFraud"].map(
-        {
-            0: "Legitimate",
-            1: "Fraud",
-        }
-    ).fillna("Unknown")
-
-
-    # --------------------------------------------------------
-    # 2. LARGE TRANSACTION FLAG
-    # --------------------------------------------------------
-
+    # 2. Large transaction flag
     chunk["is_large_transaction"] = (
         chunk["amount"] >= LARGE_TRANSACTION_THRESHOLD
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 3. VERY LARGE TRANSACTION FLAG
-    # --------------------------------------------------------
-
+    # 3. Very large transaction flag
     chunk["is_very_large_transaction"] = (
         chunk["amount"] >= VERY_LARGE_TRANSACTION_THRESHOLD
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 4. STRUCTURING / SMURFING PROXY
-    # --------------------------------------------------------
-    # Transactions just below a reporting-style threshold can
-    # be useful as an analytical red flag.
+    # 4. Near-threshold transaction proxy
     #
-    # Important:
-    # This is only a proxy indicator, not proof of structuring.
-    # --------------------------------------------------------
-
-    chunk["structuring_flag"] = (
+    # This does not detect true structuring behavior.
+    # It only identifies transactions within a configured
+    # near-threshold amount range for analytical review.
+    chunk["structuring_proxy_flag"] = (
         chunk["amount"].between(
             STRUCTURING_LOWER_LIMIT,
             STRUCTURING_UPPER_LIMIT,
@@ -80,40 +65,28 @@ def add_features(chunk):
         )
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 5. ORIGIN ACCOUNT EMPTIED
-    # --------------------------------------------------------
-    # Flag when sender had money before the transaction and
-    # the resulting balance becomes zero.
-    # --------------------------------------------------------
-
+    # 5. Origin account emptied
+    #
+    # Sender had funds before the transaction and
+    # the resulting balance became zero.
     chunk["origin_account_emptied"] = (
         (chunk["oldbalanceOrg"] > 0)
         & (chunk["newbalanceOrig"] == 0)
         & (chunk["amount"] > 0)
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 6. DESTINATION WAS EMPTY
-    # --------------------------------------------------------
-    # Receiving account had zero balance before transaction.
-    # --------------------------------------------------------
-
+    # 6. Destination was empty
+    #
+    # Receiving account had zero balance before the transaction.
     chunk["destination_was_empty"] = (
         (chunk["oldbalanceDest"] == 0)
         & (chunk["amount"] > 0)
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 7. ORIGIN BALANCE MISMATCH
-    # --------------------------------------------------------
+    # 7. Origin balance mismatch
+    #
     # Expected:
     # old sender balance - amount = new sender balance
-    # --------------------------------------------------------
-
     expected_origin_balance = (
         chunk["oldbalanceOrg"] - chunk["amount"]
     ).clip(lower=0)
@@ -126,14 +99,10 @@ def add_features(chunk):
         > 1
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 8. DESTINATION BALANCE MISMATCH
-    # --------------------------------------------------------
+    # 8. Destination balance mismatch
+    #
     # Expected:
     # old receiver balance + amount = new receiver balance
-    # --------------------------------------------------------
-
     expected_destination_balance = (
         chunk["oldbalanceDest"] + chunk["amount"]
     )
@@ -146,14 +115,9 @@ def add_features(chunk):
         > 1
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 9. TRANSACTION TYPE RISK FLAG
-    # --------------------------------------------------------
-    # TRANSFER and CASH_OUT are especially relevant in this
-    # fraud dataset.
-    # --------------------------------------------------------
-
+    # 9. Transaction-type analytical flag
+    #
+    # The cleaned dataset is focused on TRANSFER and CASH_OUT.
     chunk["high_risk_transaction_type"] = (
         chunk["type"].isin(
             [
@@ -163,36 +127,26 @@ def add_features(chunk):
         )
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 10. HOUR OF DAY
-    # --------------------------------------------------------
+    # 10. Hour of day
+    #
     # PaySim step represents an hourly simulation step.
-    # Convert it to hour 0-23.
-    # --------------------------------------------------------
-
     chunk["hour_of_day"] = (
         (chunk["step"] - 1) % 24
     ).astype("int8")
 
-
-    # --------------------------------------------------------
-    # 11. DAY NUMBER
-    # --------------------------------------------------------
-
+    # 11. Day number
     chunk["day_number"] = (
         ((chunk["step"] - 1) // 24) + 1
     ).astype("int16")
 
-
-    # --------------------------------------------------------
-    # 12. AML RISK SCORE
-    # --------------------------------------------------------
-    # Weighted analytical score.
+    # 12. Heuristic risk score
     #
-    # Maximum score = 100
-    # --------------------------------------------------------
-
+    # Large and very-large flags are intentionally cumulative.
+    # Therefore, a very large transaction receives both weights.
+    #
+    # The structuring proxy and transaction-type flag are retained
+    # for investigation and reporting but are not used directly
+    # in the score to avoid overstating weak or population-wide signals.
     chunk["risk_score"] = (
         chunk["origin_account_emptied"] * 30
         + chunk["destination_was_empty"] * 20
@@ -204,11 +158,11 @@ def add_features(chunk):
         upper=100
     ).astype("int16")
 
-
-    # --------------------------------------------------------
-    # 13. RISK LEVEL
-    # --------------------------------------------------------
-
+    # 13. Risk level
+    #
+    # Low:    0-19
+    # Medium: 20-49
+    # High:   50-100
     chunk["risk_level"] = pd.cut(
         chunk["risk_score"],
         bins=[
@@ -222,15 +176,11 @@ def add_features(chunk):
             "Medium",
             "High",
         ],
+        include_lowest=True,
     )
-
 
     return chunk
 
-
-# ============================================================
-# CREATE ENRICHED DATASET
-# ============================================================
 
 def create_enriched_dataset():
     """
@@ -240,31 +190,25 @@ def create_enriched_dataset():
     """
 
     print("\n" + "=" * 60)
-    print("FEATURE ENGINEERING STARTED")
+    print("FEATURE ENGINEERING")
     print("=" * 60)
 
-    print(f"Input file : {CLEANED_CSV_FILE}")
-    print(f"Output file: {ENRICHED_CSV_FILE}")
-    print(f"Chunk size : {CHUNK_SIZE:,}")
+    print(f"Input file  : {CLEANED_CSV_FILE}")
+    print(f"Output file : {ENRICHED_CSV_FILE}")
+    print(f"Chunk size  : {CHUNK_SIZE:,}")
 
-    # Make sure output directory exists
     ENRICHED_CSV_FILE.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    # Remove old enriched file before rebuilding
+    # Remove previous output before rebuilding
     if ENRICHED_CSV_FILE.exists():
         print("\nRemoving previous enriched dataset...")
         ENRICHED_CSV_FILE.unlink()
 
     total_rows = 0
     first_chunk = True
-
-
-    # --------------------------------------------------------
-    # PROCESS CLEANED DATASET IN CHUNKS
-    # --------------------------------------------------------
 
     for chunk_number, chunk in enumerate(
         pd.read_csv(
@@ -279,13 +223,7 @@ def create_enriched_dataset():
             f"({len(chunk):,} rows)..."
         )
 
-        # Add AML/fraud features
         chunk = add_features(chunk)
-
-
-        # ----------------------------------------------------
-        # SAVE CHUNK
-        # ----------------------------------------------------
 
         chunk.to_csv(
             ENRICHED_CSV_FILE,
@@ -295,13 +233,7 @@ def create_enriched_dataset():
         )
 
         total_rows += len(chunk)
-
         first_chunk = False
-
-
-    # --------------------------------------------------------
-    # COMPLETION MESSAGE
-    # --------------------------------------------------------
 
     print("\n" + "=" * 60)
     print("FEATURE ENGINEERING COMPLETED")
@@ -309,13 +241,8 @@ def create_enriched_dataset():
 
     print(f"Rows processed : {total_rows:,}")
     print(f"Saved to       : {ENRICHED_CSV_FILE}")
-
     print("=" * 60)
 
-
-# ============================================================
-# RUN DIRECTLY
-# ============================================================
 
 if __name__ == "__main__":
     create_enriched_dataset()
