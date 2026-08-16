@@ -10,6 +10,16 @@ This repository contains the Python analytics pipeline, fraud and risk-indicator
 
 ---
 
+## Business problem
+
+Transaction-monitoring teams must identify a relatively small number of potentially high-risk transactions within millions of legitimate transactions.
+
+The challenge is not simply detecting high-value activity, but combining transaction characteristics and behavioral risk indicators to identify activity that warrants further investigation.
+
+This project addresses that problem by transforming raw transaction data into an investigation-ready analytical layer and interactive Power BI dashboards that support risk-based transaction monitoring and investigation prioritization.
+
+---
+
 ## Why this project
 
 Reviewing millions of transactions manually is not practical for a fraud or AML investigation team.
@@ -127,39 +137,19 @@ Each major analytical stage is separated into its own Python module.
 
 ## Risk indicators
 
-The feature-engineering stage creates several indicators that can assist investigation prioritization.
+The analytical layer combines transaction value, account-balance behavior, and transaction characteristics to prioritize activity for investigation.
 
-Examples include:
+| Risk indicator | Investigation rationale |
+|---|---|
+| **High-risk transaction type** | Highlights CASH_OUT and TRANSFER activity, where confirmed fraud is concentrated in the analyzed population. |
+| **Large transaction** | Flags transactions exceeding the defined large-value threshold for additional review. |
+| **Very large transaction** | Identifies exceptionally high-value transactions that may represent elevated financial exposure. |
+| **Origin account emptied** | Detects transactions where the originating account balance falls to zero after funds are transferred. |
+| **Destination was empty** | Identifies destination accounts with no prior balance before receiving funds. |
+| **Balance mismatch** | Detects inconsistencies between expected and reported account balances. |
+| **Structuring proxy** | Flags transaction behavior that may resemble structuring patterns and warrant further investigation. |
 
-### High-risk transaction type
-
-Identifies transaction categories associated with higher fraud exposure in the analyzed dataset.
-
-### Large transaction
-
-Flags transactions exceeding the defined large-value threshold.
-
-### Very large transaction
-
-Identifies transactions with exceptionally high monetary value.
-
-### Origin account emptied
-
-Flags cases where the originating account balance falls to zero following a transaction.
-
-### Destination was empty
-
-Identifies destination accounts with no prior balance before receiving funds.
-
-### Balance mismatch
-
-Detects inconsistencies between expected and reported account balances.
-
-### Structuring proxy
-
-Identifies transaction behavior that may resemble structuring patterns and therefore warrants additional review.
-
-These indicators should be interpreted together with transaction history and customer context.
+> **Important:** These indicators are investigative signals, not automatic evidence of fraud or money laundering. They should be assessed alongside transaction history, customer context, and other relevant KYC/CDD information.
 
 ---
 
@@ -168,40 +158,30 @@ These indicators should be interpreted together with transaction history and cus
 ```text
 AML-Fraud-Transaction-Monitoring/
 │
-├── dashboard/
+├── src/                         # Core Python analytics pipeline
+│   ├── config.py                # Project paths and configuration
+│   ├── extract.py               # Source data extraction
+│   ├── transform.py             # Data cleaning and transformation
+│   ├── feature_engineering.py   # Fraud/AML risk-indicator engineering
+│   ├── validation.py            # Data and metric validation
+│   └── eda.py                   # Exploratory data analysis
 │
-├── data/
-│
-├── docs/
-│
-├── logs/
-│
-├── notebooks/
-│
-├── presentation/
-│
-├── screenshots/
+├── screenshots/                 # Power BI dashboard previews
 │   ├── executive_overview.png
 │   └── investigation_detail.png
 │
-├── sql/
+├── presentation/                # Executive case-study presentation
+├── dashboard/                   # Local Power BI project file (excluded from Git)
+├── data/                        # Raw/processed datasets (excluded from Git)
+├── sql/                         # SQL analytics workspace
 │
-├── src/
-│   ├── config.py
-│   ├── extract.py
-│   ├── transform.py
-│   ├── feature_engineering.py
-│   ├── validation.py
-│   └── eda.py
-│
-├── .gitignore
-├── LICENSE
-├── README.md
-├── requirements.txt
-└── run_pipeline.py
-```
+├── run_pipeline.py              # End-to-end pipeline runner
+├── requirements.txt             # Python dependencies
+├── README.md                    # Project documentation
+├── LICENSE                      # MIT License
+└── .gitignore                   # Git exclusion rules
 
-Raw and generated datasets are not stored in the repository because of their size.
+> Large raw and generated datasets, along with the Power BI `.pbix` file, are excluded from the repository because of GitHub file-size constraints. Dashboard screenshots are included for portfolio review.
 
 ---
 
