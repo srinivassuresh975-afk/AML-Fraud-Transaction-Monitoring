@@ -1,61 +1,190 @@
 # AML Fraud Analytics & Transaction Monitoring
 
-A project on turning a large, messy transaction population into something an investigation or fraud-monitoring team could actually work with — cleaned data, engineered risk signals, and an interactive Power BI dashboard on top.
+A data analytics project focused on transforming a large transaction dataset into an investigation-ready analytical layer using Python, fraud/AML risk indicators, exploratory analysis, and Power BI.
 
-I focused on **CASH_OUT** and **TRANSFER** transactions, since that's where confirmed fraud is concentrated in the source data. After cleaning and enrichment, the final analytical dataset lands at roughly 2.77 million transactions.
+The project focuses primarily on **CASH_OUT** and **TRANSFER** transactions, where confirmed fraudulent activity is concentrated in the source dataset.
 
-This repo holds the analytical pipeline, the fraud/risk logic behind it, dashboard screenshots, and the executive case-study presentation I put together to walk through the findings.
+After transformation and enrichment, the analytical population contains approximately **2.77 million transactions**.
+
+This repository contains the Python analytics pipeline, fraud and risk-indicator logic, Power BI dashboard screenshots, and an executive case-study presentation.
+
+---
 
 ## Why this project
 
-Manually reviewing millions of transactions isn't realistic for any team. I wanted to see how far you could get toward a workable prioritization layer using nothing more exotic than pandas, some domain-informed feature engineering, and Power BI — not fraud alone, but the *behavior* around it: accounts drained to zero right after a transaction, previously dormant destination accounts suddenly receiving funds, structuring-like patterns, and so on. These are treated as signals that something deserves a second look, not as a verdict.
+Reviewing millions of transactions manually is not practical for a fraud or AML investigation team.
+
+The objective of this project is to demonstrate how transaction data can be cleaned, transformed, enriched with behavioral risk indicators, and converted into an investigation-prioritization layer.
+
+The analysis considers indicators such as:
+
+- High-risk transaction types
+- Large-value transactions
+- Very large-value transactions
+- Origin accounts drained after transactions
+- Previously empty destination accounts receiving funds
+- Origin balance mismatches
+- Destination balance mismatches
+- Structuring-like transaction patterns
+
+These indicators are designed to support investigation prioritization and should not be interpreted as proof of fraudulent activity on their own.
+
+---
 
 ## Highlights
 
 - **2.77M** transactions in the analyzed population
-- **8.21K** confirmed fraud cases (~0.30% of all transactions)
-- **~$12.06B** in confirmed fraud exposure
-- **~1.20M** large-value transactions flagged
-- **~8.02K** structuring-related alerts
+- **8.21K** confirmed fraud cases (~0.30% of transactions)
+- Approximately **$12.06B** in confirmed fraud exposure
+- Approximately **1.20M** large-value transactions flagged
+- Approximately **8.02K** structuring-related alerts
+- End-to-end Python ETL and analytical pipeline
+- Interactive Power BI executive and investigation dashboards
+
+---
 
 ## Dashboards
 
-**Executive Overview** — portfolio-level view: transaction volume, confirmed fraud, exposure, risk distribution, transaction type, and activity over time.
+### Executive Overview
 
-![Executive Fraud Intelligence Dashboard](screenshots/executive_overview.png)
+Portfolio-level monitoring view covering:
 
-**Investigation Detail** — the same population filtered down to transaction- and account-level detail, built for moving from "what's the portfolio doing" to "which case do I open next."
+- Total transaction volume
+- Confirmed fraud transactions
+- Fraud exposure
+- Fraud percentage
+- Large transactions
+- Transaction-type distribution
+- Fraud vs legitimate transactions
+- Risk-level distribution
+- Transaction activity over time
 
-![Transaction Investigation Dashboard](screenshots/investigation_detail.png)
+![Executive Overview](screenshots/executive_overview.png)
+
+### Investigation Details
+
+Investigation-focused view designed to help analysts review suspicious transactions and prioritize higher-risk activity.
+
+![Investigation Details](screenshots/investigation_detail.png)
+
+---
 
 ## Key findings
 
-Confirmed fraud is concentrated almost entirely in CASH_OUT and TRANSFER activity. It's a small share of transaction *volume* (~0.30%) but an outsized share of transaction *value* — which is the main argument for monitoring exposure, not just counting flagged transactions.
+Confirmed fraud is concentrated almost entirely within **CASH_OUT** and **TRANSFER** transactions.
 
-Large-value activity turns out to be common across the dataset generally, so amount alone isn't a strong enough signal on its own. Combining it with behavioral indicators (balance draining to zero, dormant accounts suddenly active, structuring patterns) gives a much more useful basis for prioritization than any single indicator would.
+Although confirmed fraud represents only approximately **0.30% of transaction volume**, the associated monetary exposure is significant. This demonstrates why transaction-monitoring programs should consider both transaction counts and financial exposure.
+
+Large transaction value alone is not sufficient to classify suspicious activity because high-value transactions can also occur within legitimate activity.
+
+Combining transaction value with behavioral indicators provides a stronger investigation-prioritization framework.
+
+Examples include:
+
+- Origin account drained after the transaction
+- Previously empty destination account receiving funds
+- Balance inconsistencies
+- Structuring-like transaction behavior
+- High-risk transaction types
+
+These indicators are treated as signals requiring additional review rather than automatic fraud conclusions.
+
+---
 
 ## How it works
 
-```
-Raw transaction data → extraction → cleaning & transformation → risk indicator
-engineering → validation & EDA → Power BI dashboard → investigation & review
+```text
+Raw Transaction Data
+        ↓
+Extraction
+        ↓
+Cleaning & Transformation
+        ↓
+Risk Indicator Engineering
+        ↓
+Validation
+        ↓
+Exploratory Data Analysis
+        ↓
+Power BI Dashboard
+        ↓
+Investigation & Review
 ```
 
-Each stage lives in its own script so it can be run and reviewed independently:
+Each major analytical stage is separated into its own Python module.
 
-| Script | What it does |
+| Script | Purpose |
 |---|---|
-| `extract.py` | Reads and inspects the source transaction data |
-| `transform.py` | Cleans the data and builds the analysis population |
-| `feature_engineering.py` | Builds the behavioral and risk indicators |
-| `validation.py` | Checks the processed data and key fraud metrics |
-| `eda.py` | Explores transaction and fraud patterns pre-dashboard |
-| `run_pipeline.py` | Main entry point — runs the full pipeline end to end |
+| `extract.py` | Reads and inspects the source transaction dataset |
+| `transform.py` | Cleans the data and creates the analytical population |
+| `feature_engineering.py` | Creates behavioral and transaction risk indicators |
+| `validation.py` | Validates processed data and key fraud metrics |
+| `eda.py` | Generates analytical summaries and reporting outputs |
+| `config.py` | Stores reusable project paths and configuration |
+| `run_pipeline.py` | Runs the analytical pipeline |
+
+---
+
+## Risk indicators
+
+The feature-engineering stage creates several indicators that can assist investigation prioritization.
+
+Examples include:
+
+### High-risk transaction type
+
+Identifies transaction categories associated with higher fraud exposure in the analyzed dataset.
+
+### Large transaction
+
+Flags transactions exceeding the defined large-value threshold.
+
+### Very large transaction
+
+Identifies transactions with exceptionally high monetary value.
+
+### Origin account emptied
+
+Flags cases where the originating account balance falls to zero following a transaction.
+
+### Destination was empty
+
+Identifies destination accounts with no prior balance before receiving funds.
+
+### Balance mismatch
+
+Detects inconsistencies between expected and reported account balances.
+
+### Structuring proxy
+
+Identifies transaction behavior that may resemble structuring patterns and therefore warrants additional review.
+
+These indicators should be interpreted together with transaction history and customer context.
+
+---
 
 ## Project structure
 
-```
+```text
 AML-Fraud-Transaction-Monitoring/
+│
+├── dashboard/
+│
+├── data/
+│
+├── docs/
+│
+├── logs/
+│
+├── notebooks/
+│
+├── presentation/
+│
+├── screenshots/
+│   ├── executive_overview.png
+│   └── investigation_detail.png
+│
+├── sql/
 │
 ├── src/
 │   ├── config.py
@@ -63,59 +192,159 @@ AML-Fraud-Transaction-Monitoring/
 │   ├── transform.py
 │   ├── feature_engineering.py
 │   ├── validation.py
-│   ├── load.py
-│   ├── eda.py
-│   └── utils.py
+│   └── eda.py
 │
-├── screenshots/
-│   ├── executive_overview.png
-│   └── investigation_detail.png
-│
-├── presentation/
-│   └── AML_Fraud_Executive_Case_Study.pptx
-│
-├── run_pipeline.py
+├── .gitignore
+├── LICENSE
 ├── README.md
-└── .gitignore
+├── requirements.txt
+└── run_pipeline.py
 ```
 
-The raw and generated datasets aren't tracked in this repo — they're too large for version control.
+Raw and generated datasets are not stored in the repository because of their size.
+
+---
+
+## Technology stack
+
+**Python**
+
+- pandas
+- NumPy
+
+**Data Visualization**
+
+- Microsoft Power BI
+
+**Development**
+
+- Visual Studio Code
+- Git
+- GitHub
+
+**Analytics**
+
+- Data cleaning
+- ETL
+- Exploratory data analysis
+- Feature engineering
+- Fraud analytics
+- Transaction monitoring
+- Risk segmentation
+
+---
 
 ## Getting started
 
+### 1. Clone the repository
+
 ```bash
-# Clone the repo
 git clone https://github.com/srinivassuresh975-afk/AML-Fraud-Transaction-Monitoring.git
 cd AML-Fraud-Transaction-Monitoring
-
-# Install dependencies
-pip install pandas
 ```
 
-> If your environment needs more than pandas (numpy, scikit-learn, matplotlib, etc.), it's worth freezing those into a `requirements.txt` — `pip install -r requirements.txt` is a much more reliable setup path for anyone else pulling this repo.
+### 2. Install dependencies
 
-Drop your source transaction CSV into `data/raw/`, double-check the file path in `src/config.py`, then run:
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Add the source dataset
+
+Place the source transaction CSV inside:
+
+```text
+data/raw/
+```
+
+Verify that the source file path in:
+
+```text
+src/config.py
+```
+
+matches the dataset location.
+
+### 4. Run the pipeline
 
 ```bash
 python run_pipeline.py
 ```
 
-Individual scripts under `src/` can also be run on their own if you're testing or reviewing one stage at a time.
+Individual scripts inside `src/` can also be executed separately when testing or reviewing a specific stage of the pipeline.
+
+---
+
+## Requirements
+
+The project currently uses:
+
+```text
+pandas>=2.0.0
+numpy>=1.24.0
+```
+
+These dependencies are defined in:
+
+```text
+requirements.txt
+```
+
+Install them using:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
 
 ## Notes & limitations
 
-The risk indicators here are meant to support prioritization, not to serve as a verdict — in a real AML/fraud environment, any alert would still need customer context, transaction history, and an investigator's judgment before it's acted on. The `.pbix` file and full datasets aren't included in this repo due to size, but the pipeline, screenshots, and case-study deck are enough to review the approach end to end.
+The risk indicators in this project are intended to support transaction-monitoring and investigation prioritization.
 
-## What I'd add next
+They should **not** be interpreted as automatic determinations of fraud, money laundering, or other financial crime.
 
-- Backtest the risk logic against a real historical (non-synthetic) sample
-- Move the structuring/velocity checks from static thresholds to a rolling window
-- Add a lightweight scoring calibration step instead of the current rule-based split
+In a production AML/fraud environment, an alert would require additional investigation involving factors such as:
+
+- Customer profile
+- Transaction history
+- Counterparty behavior
+- Source and destination of funds
+- Expected account activity
+- Customer risk rating
+- Additional KYC/CDD information
+- Investigator judgment
+
+The complete raw dataset and generated analytical datasets are excluded from this repository because of their size.
+
+The Power BI `.pbix` file is also not included; dashboard screenshots are provided to demonstrate the analytical output.
+
+---
+
+## Future improvements
+
+Potential enhancements include:
+
+- Backtesting the risk logic against additional historical datasets
+- Converting static structuring checks into rolling-window/velocity analysis
+- Developing a calibrated transaction risk score
+- Adding customer-level behavioral profiling
+- Incorporating SQL-based analytical workflows
+- Adding automated data-quality testing
+- Adding model-based anomaly detection as a complementary analytical layer
+
+---
 
 ## License
 
-This project is licensed under the MIT License — see [`LICENSE`](LICENSE) for details. *(Add a `LICENSE` file to the repo root if it isn't there yet — GitHub won't show a license badge without one.)*
+This project is licensed under the **MIT License**.
+
+See the `LICENSE` file for details.
+
+---
 
 ## Contact
 
-Srinivas Suresh — feel free to open an issue or reach out if you have questions about the approach.
+**Srinivas Suresh**
+
+For questions regarding the project, methodology, or analytical approach, feel free to open an issue through the repository.
